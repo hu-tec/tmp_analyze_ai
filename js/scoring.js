@@ -140,28 +140,42 @@ const ScoringEngine = {
     const textLen = text.length;
     const words = text.split(/\s+/).filter(w => w.length > 0);
     const wordCount = words.length;
-    const sentences = text.split(/[.!?。]\s*/).filter(s => s.length > 2);
+    const sentences = text.split(/[.!?。\n]\s*/).filter(s => s.length > 2);
     const sentenceCount = sentences.length;
+    const lines = text.split('\n').filter(l => l.trim().length > 0);
 
-    // 기본 점수 계산: 텍스트 길이 기반 베이스 + 키워드 매칭 보너스
-    const baseFactor = Math.min(1, textLen / 300); // 300자 이상이면 기본 충족
+    // 구조 분석 보너스
+    const hasRole = /역할|role|you are|너는/.test(text);
+    const hasGoal = /목표|목적|goal|objective/.test(text);
+    const hasSteps = /단계|step|1\.|2\.|3\./.test(text);
+    const hasCondition = /조건|제한|condition|constraint|이내|이상/.test(text);
+    const structureBonus = (hasRole ? 0.08 : 0) + (hasGoal ? 0.08 : 0) + (hasSteps ? 0.08 : 0) + (hasCondition ? 0.06 : 0);
+
+    // 기본 점수: 텍스트 길이 + 문장 수 기반 (100자면 기본 충족)
+    const lenFactor = Math.min(1, textLen / 150);
+    const lineFactor = Math.min(1, lines.length / 3);
+    const baseFactor = Math.min(1, (lenFactor * 0.5 + lineFactor * 0.5) + structureBonus);
 
     const categories = rubric.categories.map(cat => {
       const items = cat.items.map(item => {
-        let score = Math.round(item.max * baseFactor * (0.5 + Math.random() * 0.2));
-
-        // 키워드 매칭 보너스
+        // 키워드 매칭
+        let matchRatio = 0;
         if (item.keywords) {
           const matched = item.keywords.filter(kw => text.includes(kw)).length;
-          const matchRatio = matched / item.keywords.length;
-          score = Math.round(item.max * (baseFactor * 0.4 + matchRatio * 0.5 + Math.random() * 0.1));
+          matchRatio = matched / item.keywords.length;
         }
+
+        // 점수 = 기본(50~70%) + 키워드(0~25%) + 랜덤 변동(±5%)
+        const baseScore = baseFactor * (0.55 + Math.random() * 0.15);
+        const kwBonus = matchRatio * 0.25;
+        const variance = (Math.random() - 0.5) * 0.1;
+        let score = Math.round(item.max * Math.min(1, baseScore + kwBonus + variance));
 
         // 네거티브 키워드 (반복 등)
         if (item.negKeywords) {
           const found = item.negKeywords.filter(kw => {
             const regex = new RegExp(kw, 'g');
-            return (text.match(regex) || []).length > 2;
+            return (text.match(regex) || []).length > 3;
           }).length;
           if (found > 0) score = Math.max(1, score - 2);
         }
@@ -212,12 +226,13 @@ const ScoringEngine = {
       desc: this._improvementDesc(d.name)
     }));
 
-    // 강점/약점 비율
-    const strongItems = allItems.filter(i => (i.lost / (allItems.find(a => a.name === i.name)?.lost + i.lost || 1)) < 0.2).length;
-    const weakItems = allItems.filter(i => i.lost >= 3).length;
-    const totalItems = allItems.length;
-    const strongPct = Math.round(((totalItems - weakItems) / totalItems) * 80);
-    const weakPct = Math.round((weakItems / totalItems) * 100);
+    // 강점/약점 비율 — 카테고리 달성률 기반
+    const strongCats = categories.filter(c => c.pct >= 75).length;
+    const weakCats = categories.filter(c => c.pct < 50).length;
+    const normalCats = categories.length - strongCats - weakCats;
+    const totalCats = categories.length;
+    const strongPct = Math.max(10, Math.round((strongCats / totalCats) * 100));
+    const weakPct = Math.max(5, Math.round((weakCats / totalCats) * 100));
     const normalPct = 100 - strongPct - weakPct;
 
     // 전문 코멘트
