@@ -1,5 +1,6 @@
 /* ===== APP STATE & NAVIGATION ===== */
-let state = { mode: 'exam', exam: 'prompt', plan: 'free', page: 'page1' };
+let state = { mode: 'exam', exam: 'prompt', plan: 'free', page: 'page1', cbtSource: null };
+let currentResult = null; // 실제 채점 결과 (null이면 더미 사용)
 
 function selectMode(el, mode) {
   document.querySelectorAll('[data-mode]').forEach(c => c.classList.remove('selected'));
@@ -23,7 +24,7 @@ function goPage(id) {
     a.classList.toggle('active', i === idx);
   });
 
-  if (id === 'page3') renderPage3();
+  if (id === 'page3') { runScoring(); renderPage3(); }
   if (id === 'page4') renderPage4();
   if (id === 'page5') renderPage5();
   window.scrollTo(0, 0);
@@ -48,7 +49,7 @@ function toggleAccordion(btn) {
 
 /* ===== PAGE 3: 1단계 기본 분석 ===== */
 function renderPage3() {
-  const r = DUMMY_RESULT;
+  const r = currentResult || DUMMY_RESULT;
   const cats = r.categories;
 
   // COL1: Score + Radar + Gauges
@@ -99,7 +100,7 @@ function renderPage3() {
 
 /* ===== PAGE 4: 2단계 확장 리포트 ===== */
 function renderPage4() {
-  const r = DUMMY_RESULT;
+  const r = currentResult || DUMMY_RESULT;
   const cats = r.categories;
 
   // COL1
@@ -144,7 +145,7 @@ function renderPage4() {
 
 /* ===== PAGE 5: 3단계 전문가 첨삭 ===== */
 function renderPage5() {
-  const r = DUMMY_RESULT;
+  const r = currentResult || DUMMY_RESULT;
   const rv = r.expertReview;
 
   // COL1: Reviewer profile
@@ -211,6 +212,70 @@ function renderPage5() {
         </div>
       </div>
     </div>`).join('');
+}
+
+/* ===== SCORING EXECUTION ===== */
+function runScoring() {
+  const answer = document.getElementById('answerInput')?.value || '';
+  const question = document.getElementById('questionInput')?.value || '';
+
+  if (answer.trim().length < 10) {
+    // 텍스트가 너무 짧으면 더미 사용
+    currentResult = null;
+    return;
+  }
+
+  // 채점 실행
+  currentResult = ScoringEngine.score(state.exam, answer, question);
+
+  // Work Studio에 제출 저장 (비동기, 실패해도 결과 표시에 영향 없음)
+  saveSubmission(answer, question);
+}
+
+async function saveSubmission(answer, question) {
+  try {
+    const submission = {
+      exam: state.exam,
+      examName: EXAMS[state.exam]?.name || state.exam,
+      plan: state.plan,
+      mode: state.mode,
+      question: question,
+      answer: answer,
+      cbtSource: state.cbtSource || null,
+      total: currentResult?.total || null,
+      grade: currentResult?.grade || null,
+      submittedAt: new Date().toISOString(),
+    };
+
+    const res = await fetch(`${API_BASE}/api/scorehub_submissions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(submission)
+    });
+
+    if (res.ok) {
+      const { id } = await res.json();
+      // 결과도 저장
+      if (currentResult) {
+        await fetch(`${API_BASE}/api/scorehub_results`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            submissionId: id,
+            exam: state.exam,
+            total: currentResult.total,
+            grade: currentResult.grade,
+            categories: currentResult.categories.map(c => ({ name: c.shortName, max: c.max, score: c.score, pct: c.pct })),
+            deductions: currentResult.deductions,
+            scoredAt: new Date().toISOString(),
+          })
+        });
+      }
+    }
+  } catch (e) {
+    // 저장 실패해도 결과 화면은 정상 동작
+    console.warn('저장 실패:', e.message);
+  }
 }
 
 /* ===== CBT INTEGRATION ===== */
@@ -301,6 +366,8 @@ function selectCbtResult(result) {
   // Show loaded info
   document.getElementById('cbt-loaded-info').style.display = 'block';
   document.getElementById('cbt-loaded-name').textContent = `${result.name} (${result.program})`;
+  state.cbtSource = { source: result.source, id: result.id, name: result.name, program: result.program };
+
   document.getElementById('cbt-loaded-detail').textContent =
     `${result.source === 'cbt_results' ? 'CBT' : 'LT'}-${String(result.id).padStart(4,'0')} · ${result.date} · ${result.answerCount}문항`;
 
@@ -321,6 +388,7 @@ function clearCbtLoad() {
   document.getElementById('cbt-loaded-info').style.display = 'none';
   document.getElementById('answerInput').value = DUMMY_ANSWER;
   document.getElementById('charCount').textContent = DUMMY_ANSWER.length;
+  state.cbtSource = null;
 }
 
 // Close modal on overlay click
