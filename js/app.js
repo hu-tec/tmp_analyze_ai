@@ -327,16 +327,38 @@ async function fetchCbtResults() {
 
     listEl.innerHTML = rows.map(row => {
       const d = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+
+      // CBT 결과는 examTitle/score 구조, 레벨테스트는 program/answers 구조
+      const isCbt = source === 'cbt_results';
       const name = d.name || '이름 없음';
-      const program = d.program || '미지정';
-      const date = d.date || row.created_at?.split('T')[0] || '';
-      const hasEssay = d.essay ? '에세이 포함' : '';
+      const program = isCbt ? (d.examTitle || '미지정') : (d.program || '미지정');
+      const date = d.submittedAt?.split('T')[0] || d.date || row.created_at?.split('T')[0] || '';
+      const hasEssay = d.essay ? true : false;
       const answerCount = d.answers ? Object.keys(d.answers).length : 0;
-      const sourceLabel = source === 'cbt_results' ? 'CBT' : 'LT';
-      const badgeColor = { 'AI프롬프트':'teal','AI번역':'blue','TESOL':'amber','AI윤리':'rose','ITT정통번역':'purple' }[program] || 'gray';
+      const sourceLabel = isCbt ? 'CBT' : 'LT';
+
+      // CBT 점수 정보
+      const scoreInfo = isCbt && d.score != null ? `${d.score}/${d.totalPoints}점` : '';
+      const passInfo = isCbt && d.passed != null ? (d.passed ? '합격' : '불합격') : '';
+      const passBadge = d.passed ? 'green' : 'rose';
+
+      // 프로그램→배지 색상 (CBT는 시험명 기반)
+      const badgeColor = { 'AI프롬프트':'teal','AI번역':'blue','TESOL':'amber','AI윤리':'rose','ITT정통번역':'purple' }[program]
+        || (isCbt ? 'indigo' : 'gray');
+
+      // CBT용 답안 텍스트 생성: categoryScores 기반
+      const cbtText = isCbt ? buildCbtAnswerText(d) : '';
+
+      const payload = {
+        id: row.id, source, name, program, date,
+        essay: d.essay || '', answers: d.answers || {},
+        answerCount, cbtText,
+        score: d.score, totalPoints: d.totalPoints, passed: d.passed,
+        categoryScores: d.categoryScores || null
+      };
 
       return `
-        <div class="cbt-item" onclick='selectCbtResult(${JSON.stringify({id: row.id, source, name, program, date, essay: d.essay || "", answers: d.answers || {}, answerCount}).replace(/'/g,"&#39;")})'>
+        <div class="cbt-item" onclick='selectCbtResult(${JSON.stringify(payload).replace(/'/g,"&#39;")})'>
           <div class="cbt-item-header">
             <div class="cbt-item-name">${name}</div>
             <div class="cbt-item-date">${date}</div>
@@ -344,6 +366,8 @@ async function fetchCbtResults() {
           <div class="cbt-item-meta">
             <span class="badge badge-${badgeColor}">${program}</span>
             <span class="badge badge-gray">${sourceLabel}-${String(row.id).padStart(4,'0')}</span>
+            ${scoreInfo ? `<span class="text-xs font-bold text-slate-600">${scoreInfo}</span>` : ''}
+            ${passInfo ? `<span class="badge badge-${passBadge}">${passInfo}</span>` : ''}
             ${answerCount ? `<span class="text-xs text-slate-400">${answerCount}문항</span>` : ''}
             ${hasEssay ? '<span class="text-xs text-slate-400">에세이</span>' : ''}
           </div>
@@ -356,18 +380,41 @@ async function fetchCbtResults() {
   }
 }
 
-function selectCbtResult(result) {
-  // Fill answer input
-  let content = '';
-  if (result.essay) {
-    content += result.essay;
+function buildCbtAnswerText(d) {
+  // CBT 결과를 분석용 텍스트로 변환
+  let text = '';
+  text += `시험: ${d.examTitle || ''}\n`;
+  text += `점수: ${d.score ?? '-'}/${d.totalPoints ?? '-'}점 (${d.percentage ?? '-'}%)\n`;
+  text += `합격: ${d.passed ? '합격' : '불합격'}\n`;
+  if (d.categoryScores && typeof d.categoryScores === 'object') {
+    text += '\n카테고리별 점수:\n';
+    if (Array.isArray(d.categoryScores)) {
+      d.categoryScores.forEach(cs => {
+        text += `  ${cs.category || cs.name || '-'}: ${cs.score ?? cs.earned ?? '-'}/${cs.total ?? cs.max ?? '-'}점\n`;
+      });
+    } else {
+      Object.entries(d.categoryScores).forEach(([k, v]) => {
+        text += `  ${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}\n`;
+      });
+    }
   }
-  if (result.answers && Object.keys(result.answers).length) {
-    if (content) content += '\n\n---\n\n';
-    content += '객관식 답안:\n';
-    Object.entries(result.answers).forEach(([q, a]) => {
-      content += `  ${q}번: ${a}\n`;
-    });
+  return text;
+}
+
+function selectCbtResult(result) {
+  // Fill answer input — CBT 결과는 cbtText 사용, 레벨테스트는 essay/answers
+  let content = '';
+  if (result.cbtText) {
+    content = result.cbtText;
+  } else {
+    if (result.essay) content += result.essay;
+    if (result.answers && Object.keys(result.answers).length) {
+      if (content) content += '\n\n---\n\n';
+      content += '객관식 답안:\n';
+      Object.entries(result.answers).forEach(([q, a]) => {
+        content += `  ${q}번: ${a}\n`;
+      });
+    }
   }
 
   document.getElementById('answerInput').value = content;
