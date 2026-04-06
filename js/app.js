@@ -213,6 +213,123 @@ function renderPage5() {
     </div>`).join('');
 }
 
+/* ===== CBT INTEGRATION ===== */
+const API_BASE = 'https://bmidcy9z17.execute-api.ap-northeast-2.amazonaws.com';
+
+function openCbtModal() {
+  document.getElementById('cbt-modal').style.display = 'flex';
+  fetchCbtResults();
+}
+
+function closeCbtModal() {
+  document.getElementById('cbt-modal').style.display = 'none';
+}
+
+async function fetchCbtResults() {
+  const source = document.getElementById('cbt-source').value;
+  const listEl = document.getElementById('cbt-list');
+  const loadingEl = document.getElementById('cbt-loading');
+  const emptyEl = document.getElementById('cbt-empty');
+
+  listEl.innerHTML = '';
+  loadingEl.style.display = 'block';
+  emptyEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/${source}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows = await res.json();
+
+    loadingEl.style.display = 'none';
+
+    if (!rows.length) {
+      emptyEl.style.display = 'block';
+      return;
+    }
+
+    // Sort by created_at desc
+    rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    listEl.innerHTML = rows.map(row => {
+      const d = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+      const name = d.name || '이름 없음';
+      const program = d.program || '미지정';
+      const date = d.date || row.created_at?.split('T')[0] || '';
+      const hasEssay = d.essay ? '에세이 포함' : '';
+      const answerCount = d.answers ? Object.keys(d.answers).length : 0;
+      const sourceLabel = source === 'cbt_results' ? 'CBT' : 'LT';
+      const badgeColor = { 'AI프롬프트':'teal','AI번역':'blue','TESOL':'amber','AI윤리':'rose','ITT정통번역':'purple' }[program] || 'gray';
+
+      return `
+        <div class="cbt-item" onclick='selectCbtResult(${JSON.stringify({id: row.id, source, name, program, date, essay: d.essay || "", answers: d.answers || {}, answerCount}).replace(/'/g,"&#39;")})'>
+          <div class="cbt-item-header">
+            <div class="cbt-item-name">${name}</div>
+            <div class="cbt-item-date">${date}</div>
+          </div>
+          <div class="cbt-item-meta">
+            <span class="badge badge-${badgeColor}">${program}</span>
+            <span class="badge badge-gray">${sourceLabel}-${String(row.id).padStart(4,'0')}</span>
+            ${answerCount ? `<span class="text-xs text-slate-400">${answerCount}문항</span>` : ''}
+            ${hasEssay ? '<span class="text-xs text-slate-400">에세이</span>' : ''}
+          </div>
+        </div>`;
+    }).join('');
+
+  } catch (err) {
+    loadingEl.style.display = 'none';
+    listEl.innerHTML = `<div class="notice notice-warn">데이터를 불러올 수 없습니다: ${err.message}</div>`;
+  }
+}
+
+function selectCbtResult(result) {
+  // Fill answer input
+  let content = '';
+  if (result.essay) {
+    content += result.essay;
+  }
+  if (result.answers && Object.keys(result.answers).length) {
+    if (content) content += '\n\n---\n\n';
+    content += '객관식 답안:\n';
+    Object.entries(result.answers).forEach(([q, a]) => {
+      content += `  ${q}번: ${a}\n`;
+    });
+  }
+
+  document.getElementById('answerInput').value = content;
+  document.getElementById('charCount').textContent = content.length;
+
+  // Show loaded info
+  document.getElementById('cbt-loaded-info').style.display = 'block';
+  document.getElementById('cbt-loaded-name').textContent = `${result.name} (${result.program})`;
+  document.getElementById('cbt-loaded-detail').textContent =
+    `${result.source === 'cbt_results' ? 'CBT' : 'LT'}-${String(result.id).padStart(4,'0')} · ${result.date} · ${result.answerCount}문항`;
+
+  // Update exam badge if program matches
+  const programMap = { 'AI프롬프트':'prompt','AI번역':'translation','TESOL':'tesol','AI윤리':'ethics','ITT정통번역':'itt' };
+  if (programMap[result.program]) {
+    state.exam = programMap[result.program];
+    const badge = document.getElementById('p2-exam-badge');
+    const colors = { prompt:'teal', translation:'blue', tesol:'amber', ethics:'rose', itt:'purple' };
+    badge.textContent = result.program;
+    badge.className = `badge badge-${colors[state.exam] || 'gray'}`;
+  }
+
+  closeCbtModal();
+}
+
+function clearCbtLoad() {
+  document.getElementById('cbt-loaded-info').style.display = 'none';
+  document.getElementById('answerInput').value = DUMMY_ANSWER;
+  document.getElementById('charCount').textContent = DUMMY_ANSWER.length;
+}
+
+// Close modal on overlay click
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.style.display = 'none';
+  }
+});
+
 /* ===== INIT ===== */
 document.addEventListener('DOMContentLoaded', () => {
   goPage('page1');

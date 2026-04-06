@@ -177,11 +177,25 @@
   <div class="page-title-bar"><h1>문서 제출 및 분석 옵션</h1><p>분석할 문서를 입력하고 플랜을 선택하세요</p></div>
   <div class="content-area">
     <div class="grid-4col">
-      <!-- COL1: 시험 정보 -->
+      <!-- COL1: CBT 불러오기 + 시험 정보 -->
       <div>
-        <div class="card">
+        <div class="card" style="background:linear-gradient(135deg,#f0f4ff,#e8ecff);border-color:#c7d2fe;">
+          <div class="card-header"><div class="card-title">CBT 시험 결과 불러오기</div></div>
+          <p class="text-xs text-slate-500 mb-10">AITe CBT에서 응시한 시험 결과를 불러와 분석할 수 있습니다.</p>
+          <button class="btn btn-primary btn-block" onclick="openCbtModal()">시험 결과 불러오기</button>
+          <div id="cbt-loaded-info" style="display:none;" class="mt-10">
+            <div class="divider"></div>
+            <div class="d-flex items-center gap-6 mt-8">
+              <div class="status-dot green"></div>
+              <div class="text-xs"><span class="font-bold" id="cbt-loaded-name"></span> 결과 연결됨</div>
+            </div>
+            <div class="text-xs text-slate-400 mt-4" id="cbt-loaded-detail"></div>
+            <button class="btn btn-sm btn-secondary mt-8" onclick="clearCbtLoad()">연결 해제</button>
+          </div>
+        </div>
+        <div class="card mt-12">
           <div class="card-header"><div class="card-title">시험 정보</div></div>
-          <div class="mb-10"><div class="kpi-label">선택 시험</div><div class="kpi-value"><span class="badge badge-teal">AI프롬프트</span></div></div>
+          <div class="mb-10"><div class="kpi-label">선택 시험</div><div class="kpi-value"><span class="badge badge-teal" id="p2-exam-badge">AI프롬프트</span></div></div>
           <div class="mb-10"><div class="kpi-label">총 배점</div><div class="kpi-value">100점</div></div>
           <div class="mb-10"><div class="kpi-label">평가 영역</div><div class="kpi-value">5개 대분류</div></div>
           <div><div class="kpi-label">시험 시간</div><div class="kpi-value">90분</div></div>
@@ -191,7 +205,7 @@
           <ul style="list-style:none;font-size:11px;color:var(--slate-500);line-height:2;">
             <li>• 답안은 한국어 또는 영어로 작성</li>
             <li>• 최대 5,000자 이내</li>
-            <li>• 파일 첨부 시 PDF, DOCX 지원</li>
+            <li>• CBT 결과 불러오기 시 자동 입력</li>
             <li>• 제출 후 수정 불가</li>
           </ul>
         </div>
@@ -402,6 +416,28 @@
         <div class="card-title mt-12 mb-6" style="padding:0 2px;">추천 전문가</div>
         <div id="p5-experts"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CBT MODAL ===== -->
+<div id="cbt-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="card-title" style="font-size:14px;">CBT 시험 결과 불러오기</div>
+      <button class="modal-close" onclick="closeCbtModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="d-flex gap-8 mb-12">
+        <select class="form-select" id="cbt-source" onchange="fetchCbtResults()" style="flex:1;">
+          <option value="cbt_results">CBT 시험 결과</option>
+          <option value="level_test_submissions">레벨테스트 답안</option>
+        </select>
+        <button class="btn btn-sm btn-primary" onclick="fetchCbtResults()">새로고침</button>
+      </div>
+      <div id="cbt-loading" class="text-center text-slate-400 text-sm" style="padding:32px;">불러오는 중...</div>
+      <div id="cbt-empty" class="text-center text-slate-400 text-sm" style="padding:32px;display:none;">결과가 없습니다.</div>
+      <div id="cbt-list" style="max-height:360px;overflow-y:auto;"></div>
     </div>
   </div>
 </div>
