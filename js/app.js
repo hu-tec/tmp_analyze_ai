@@ -9,6 +9,16 @@ function selectMode(el, mode) {
 }
 
 function goPage(id) {
+  // 플랜 게이팅: 채점 전(page3 이전)에는 자유 이동, 결과 페이지는 플랜 체크
+  if (id === 'page4' && state.plan === 'free') {
+    openPaymentModal('standard', '2단계 확장 리포트', '₩29,000', 'page4');
+    return;
+  }
+  if (id === 'page5' && state.plan !== 'premium') {
+    openPaymentModal('premium', '3단계 전문가 첨삭', '₩79,000', 'page5');
+    return;
+  }
+
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id)?.classList.add('active');
   state.page = id;
@@ -397,6 +407,80 @@ document.addEventListener('click', (e) => {
     e.target.style.display = 'none';
   }
 });
+
+/* ===== PAYMENT (DUMMY) ===== */
+let paymentTarget = null; // 결제 후 이동할 페이지
+
+function openPaymentModal(planId, planName, price, targetPage) {
+  paymentTarget = { planId, targetPage };
+  const modal = document.getElementById('payment-modal');
+  document.getElementById('pay-plan-name').textContent = planName;
+  document.getElementById('pay-price').textContent = price;
+  document.getElementById('pay-btn').textContent = `${price} 결제하기`;
+  document.getElementById('pay-processing').style.display = 'none';
+  document.getElementById('pay-form').style.display = 'block';
+  document.getElementById('pay-btn').disabled = false;
+  modal.style.display = 'flex';
+}
+
+function closePaymentModal() {
+  document.getElementById('payment-modal').style.display = 'none';
+}
+
+function processPayment() {
+  const btn = document.getElementById('pay-btn');
+  const form = document.getElementById('pay-form');
+  const processing = document.getElementById('pay-processing');
+
+  btn.disabled = true;
+  btn.textContent = '처리 중...';
+
+  // 1초 후 처리 화면 → 1.5초 후 완료
+  setTimeout(() => {
+    form.style.display = 'none';
+    processing.style.display = 'block';
+
+    setTimeout(() => {
+      // 결제 완료 → 플랜 업그레이드
+      if (paymentTarget) {
+        state.plan = paymentTarget.planId;
+        // 페이지2의 tier 카드 선택 상태 업데이트
+        const tierIdx = { free: 0, standard: 1, premium: 2 }[state.plan];
+        document.querySelectorAll('.tier-card').forEach((c, i) => {
+          c.classList.toggle('selected', i === tierIdx);
+        });
+      }
+
+      closePaymentModal();
+
+      // 목표 페이지로 이동
+      if (paymentTarget?.targetPage) {
+        goPage(paymentTarget.targetPage);
+      }
+      paymentTarget = null;
+    }, 1500);
+  }, 800);
+}
+
+/* ===== PDF DOWNLOAD ===== */
+function downloadPDF() {
+  // 현재 보이는 결과 페이지를 프린트용으로 렌더링
+  document.body.classList.add('print-mode');
+
+  // 인쇄할 페이지 결정 (page4가 가장 포괄적)
+  const printPage = document.getElementById('page4') || document.getElementById('page3');
+  if (printPage) {
+    printPage.classList.add('print-target');
+  }
+
+  window.print();
+
+  // 프린트 다이얼로그 닫힌 후 복원
+  setTimeout(() => {
+    document.body.classList.remove('print-mode');
+    if (printPage) printPage.classList.remove('print-target');
+  }, 500);
+}
 
 /* ===== INIT ===== */
 document.addEventListener('DOMContentLoaded', () => {
