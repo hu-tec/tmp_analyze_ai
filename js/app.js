@@ -12,7 +12,6 @@ function goPage(id) {
   document.getElementById(id)?.classList.add('active');
   state.page = id;
 
-  // Update step bar
   const steps = ['page1','page2','page3','page4','page5'];
   const idx = steps.indexOf(id);
   document.querySelectorAll('.step-item').forEach((el, i) => {
@@ -20,22 +19,19 @@ function goPage(id) {
     if (i === idx) el.classList.add('active');
     else if (i < idx) el.classList.add('done');
   });
-
-  // Update nav
   document.querySelectorAll('.header-nav a').forEach((a, i) => {
     a.classList.toggle('active', i === idx);
   });
 
-  // Render page content
   if (id === 'page3') renderPage3();
   if (id === 'page4') renderPage4();
   if (id === 'page5') renderPage5();
-
   window.scrollTo(0, 0);
 }
 
 function selectExam(el, exam) {
-  document.querySelectorAll('.exam-card').forEach(c => c.classList.remove('selected'));
+  el.closest('.exam-card')?.classList.add('selected');
+  document.querySelectorAll('.exam-list .exam-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   state.exam = exam;
 }
@@ -55,55 +51,50 @@ function renderPage3() {
   const r = DUMMY_RESULT;
   const cats = r.categories;
 
-  // COL1
+  // COL1: Score + Radar + Gauges
   document.getElementById('p3-score-ring').innerHTML = renderScoreRing('', r.total);
   document.getElementById('p3-radar').innerHTML = renderRadar(cats);
   document.getElementById('p3-gauges').innerHTML = renderMiniGauges(cats);
 
-  // COL2
+  // COL2: Category table + bar chart + donut
   document.getElementById('p3-cat-table').innerHTML = `
-    <table class="tbl">
-      <thead><tr><th>대분류</th><th>배점</th><th>획득</th><th>달성</th><th>상태</th></tr></thead>
+    <table class="tbl tbl-compact">
+      <thead><tr><th>영역</th><th>배점</th><th>획득</th><th>달성</th><th>상태</th></tr></thead>
       <tbody>${cats.map(c => `
         <tr>
-          <td>${c.name}</td><td>${c.max}</td>
+          <td class="font-bold">${c.shortName}</td><td>${c.max}</td>
           <td class="score-cell">${c.score}</td>
           <td><span class="heat-cell ${c.pct >= 80 ? 'heat-high' : c.pct >= 60 ? 'heat-mid' : 'heat-low'}">${c.pct}%</span></td>
-          <td><span class="badge ${c.pct >= 80 ? 'badge-green' : 'badge-amber'}">${c.status}</span></td>
+          <td><span class="badge badge-${c.pct >= 80 ? 'green' : c.pct >= 60 ? 'amber' : 'rose'}">${c.status}</span></td>
         </tr>`).join('')}
       </tbody>
     </table>`;
   document.getElementById('p3-bar-chart').innerHTML = renderBarChart(cats);
   document.getElementById('p3-donut').innerHTML = renderDonut(cats, r.total);
 
-  // COL3 - 감점 랭킹 Top3
-  document.getElementById('p3-deductions').innerHTML = r.deductions.slice(0, 3).map((d, i) => {
-    const cls = ['gold','silver','bronze'][i];
-    const numCls = ['rank-1','rank-2','rank-3'][i];
-    return `
-      <div class="rank-bar-row">
-        <div class="rank-num ${numCls}">${d.rank}</div>
-        <div class="rank-label">${d.name}</div>
-        <div class="rank-bar-track"><div class="rank-bar-fill ${cls}" style="width:${Math.abs(d.points) / 3 * 100}%">${d.points}점</div></div>
-      </div>`;
-  }).join('');
+  // COL3: Deduction Top 3
+  document.getElementById('p3-deductions').innerHTML = renderRankBars(r.deductions, 3);
 
-  // COL4
-  document.getElementById('p3-improvements').innerHTML = `
-    <table class="tbl tbl-compact">
-      <thead><tr><th>#</th><th>항목</th><th>기대 상승</th></tr></thead>
-      <tbody>${r.improvements.map((imp, i) => `
-        <tr><td>${i + 1}</td><td class="font-bold">${imp.name}</td><td class="text-emerald font-bold">${imp.gain}</td></tr>`).join('')}
-      </tbody>
-    </table>`;
+  // COL4: Improvements + Strength
+  document.getElementById('p3-improvements').innerHTML = r.improvements.map((imp, i) => `
+    <div class="d-flex items-center gap-8 mb-8">
+      <div class="rank-num rank-${i + 1}" style="width:20px;height:20px;font-size:10px;">${i + 1}</div>
+      <div class="flex-1">
+        <div class="font-bold text-sm">${imp.name}</div>
+        <div class="text-xs text-slate-400">${imp.desc}</div>
+      </div>
+      <div class="text-emerald font-bold text-sm">${imp.gain}</div>
+    </div>`).join('');
 
-  const sr = r.strengthRatio;
-  document.getElementById('p3-strength').innerHTML = `
-    <div class="stacked-bar">
-      <div class="stacked-seg" style="width:${sr.strong}%;background:var(--emerald)">강점 ${sr.strong}%</div>
-      <div class="stacked-seg" style="width:${sr.normal}%;background:var(--amber)">보통 ${sr.normal}%</div>
-      <div class="stacked-seg" style="width:${sr.weak}%;background:var(--rose)">약점 ${sr.weak}%</div>
-    </div>`;
+  document.getElementById('p3-strength').innerHTML = renderStackedBar(r.strengthRatio);
+
+  // Exam info
+  document.getElementById('p3-exam-info').innerHTML = `
+    <div class="info-row"><span class="info-key">시험</span><span class="info-val">${EXAMS[r.exam].name}</span></div>
+    <div class="info-row"><span class="info-key">응시일</span><span class="info-val">${r.date}</span></div>
+    <div class="info-row"><span class="info-key">문항</span><span class="info-val">${r.questionType}</span></div>
+    <div class="info-row"><span class="info-key">엔진</span><span class="info-val">${r.engine}</span></div>
+    <div class="info-row"><span class="info-key">소요</span><span class="info-val">${r.duration}</span></div>`;
 }
 
 /* ===== PAGE 4: 2단계 확장 리포트 ===== */
@@ -114,26 +105,25 @@ function renderPage4() {
   // COL1
   document.getElementById('p4-score-ring').innerHTML = renderScoreRing('', r.total);
   document.getElementById('p4-bars').innerHTML = renderBarChart(cats);
-  document.getElementById('p4-deductions-all').innerHTML = r.deductions.map((d, i) => {
-    const cls = i < 3 ? ['gold','silver','bronze'][i] : '';
-    const numCls = i < 3 ? ['rank-1','rank-2','rank-3'][i] : 'rank-other';
-    return `
-      <div class="rank-bar-row">
-        <div class="rank-num ${numCls}">${d.rank}</div>
-        <div class="rank-label">${d.name}</div>
-        <div class="rank-bar-track"><div class="rank-bar-fill ${cls || ''}" style="width:${Math.abs(d.points) / 3 * 100}%;${cls ? '' : 'background:var(--slate-400)'}">${d.points}점</div></div>
-      </div>`;
-  }).join('');
+  document.getElementById('p4-deductions-all').innerHTML = renderRankBars(r.deductions);
 
-  // COL2 - 세부 채점 전체 + Heatmap
+  // COL2: Detail tables + waterfall
   document.getElementById('p4-detail-tables').innerHTML = cats.map(cat => `
     <div class="accordion open">
-      <button class="accordion-trigger" onclick="toggleAccordion(this)">${cat.name} 세부 <span class="accordion-arrow">▼</span></button>
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span>${cat.shortName} <span class="badge badge-${cat.pct >= 80 ? 'green' : 'amber'}" style="margin-left:4px;">${cat.score}/${cat.max}</span></span>
+        <span class="accordion-arrow">▼</span>
+      </button>
       <div class="accordion-body">
-        <table class="tbl tbl-compact">
+        <table class="tbl tbl-compact tbl-striped">
           <thead><tr><th>항목</th><th>배점</th><th>획득</th><th>코멘트</th></tr></thead>
           <tbody>${cat.items.map(item => `
-            <tr><td>${item.name}</td><td>${item.max}</td><td class="score-cell">${item.score}</td><td class="text-xs text-slate-500">${item.comment}</td></tr>`).join('')}
+            <tr>
+              <td class="font-bold">${item.name}</td>
+              <td>${item.max}</td>
+              <td class="score-cell">${item.score}</td>
+              <td class="text-xs text-slate-500">${item.comment}</td>
+            </tr>`).join('')}
           </tbody>
         </table>
       </div>
@@ -141,17 +131,15 @@ function renderPage4() {
 
   document.getElementById('p4-waterfall').innerHTML = renderWaterfall(cats, r.total, r.maxScore);
 
-  // COL3 - 전문 코멘트
+  // COL3: Comments + Distribution + Dot matrix
   document.getElementById('p4-comments').innerHTML = r.expertComments.map(c => `
-    <div style="margin-bottom:12px;">
-      <div class="font-bold text-sm" style="margin-bottom:4px;">${c.category}</div>
-      <div class="text-xs text-slate-600" style="line-height:1.6;">${c.text}</div>
+    <div class="comment-block">
+      <div class="comment-cat"><span class="status-dot ${c.category === '보안' ? 'red' : c.category === '적절성' ? 'amber' : 'green'}"></span> ${c.category}</div>
+      <div class="comment-text">${c.text}</div>
     </div>`).join('');
 
   document.getElementById('p4-distribution').innerHTML = renderDistribution(r.distribution, r.total);
   document.getElementById('p4-dot-matrix').innerHTML = renderDotMatrix(r.total, r.maxScore);
-
-  // COL4 - PDF 미리보기 + 업그레이드
 }
 
 /* ===== PAGE 5: 3단계 전문가 첨삭 ===== */
@@ -159,52 +147,67 @@ function renderPage5() {
   const r = DUMMY_RESULT;
   const rv = r.expertReview;
 
-  // COL1 - 전문가 프로필
+  // COL1: Reviewer profile
   document.getElementById('p5-reviewer').innerHTML = `
     <div style="text-align:center;">
-      <div style="font-size:48px;margin-bottom:8px;">${rv.reviewer.photo}</div>
-      <div class="font-bold text-lg">${rv.reviewer.name}</div>
+      <div style="font-size:44px;margin-bottom:6px;">${rv.reviewer.photo}</div>
+      <div class="font-bold" style="font-size:15px;">${rv.reviewer.name}</div>
       <div class="text-xs text-slate-500">${rv.reviewer.title}</div>
-      <div class="text-xs text-slate-400 mt-4">경력 ${rv.reviewer.career} · ⭐ ${rv.reviewer.rating} · 리뷰 ${rv.reviewer.reviews}건</div>
+      <div class="d-flex justify-between mt-10" style="padding:0 8px;">
+        <div class="text-center"><div class="text-xs text-slate-400">경력</div><div class="font-bold text-sm">${rv.reviewer.career}</div></div>
+        <div class="text-center"><div class="text-xs text-slate-400">평점</div><div class="font-bold text-sm">⭐ ${rv.reviewer.rating}</div></div>
+        <div class="text-center"><div class="text-xs text-slate-400">리뷰</div><div class="font-bold text-sm">${rv.reviewer.reviews}건</div></div>
+      </div>
     </div>`;
 
+  // Summary
+  document.getElementById('p5-summary').innerHTML = `
+    <div class="notice notice-info">${rv.summary}</div>
+    <div class="d-flex gap-8 mt-10">
+      <div class="text-center flex-1" style="padding:8px;background:var(--slate-50);border-radius:var(--radius-sm);">
+        <div class="text-xs text-slate-400">수정 사항</div>
+        <div class="font-bold text-primary">${rv.annotations.filter(a => a.type !== 'good').length}건</div>
+      </div>
+      <div class="text-center flex-1" style="padding:8px;background:#f0fdf4;border-radius:var(--radius-sm);">
+        <div class="text-xs text-slate-400">우수 항목</div>
+        <div class="font-bold text-emerald">${rv.annotations.filter(a => a.type === 'good').length}건</div>
+      </div>
+    </div>`;
+
+  // Roadmap
   document.getElementById('p5-roadmap').innerHTML = rv.roadmap.map(s => `
-    <div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;">
-      <div style="width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${s.step}</div>
-      <div>
-        <div class="font-bold text-sm">${s.action}</div>
-        <div class="text-xs text-slate-500">${s.desc}</div>
-        <div class="text-xs text-emerald font-bold mt-4">${s.expected}</div>
+    <div class="roadmap-step">
+      <div class="roadmap-num">${s.step}</div>
+      <div class="roadmap-content">
+        <div class="roadmap-action">${s.action}</div>
+        <div class="roadmap-desc">${s.desc}</div>
+        <div class="roadmap-gain">${s.expected}</div>
       </div>
     </div>`).join('');
 
-  // COL2 - 첨삭 내용
-  document.getElementById('p5-annotations').innerHTML = rv.annotations.map(a => {
-    const borderColor = a.type === 'good' ? 'var(--emerald)' : a.type === 'warn' ? 'var(--amber)' : 'var(--rose)';
-    const bgColor = a.type === 'good' ? '#f0fdf4' : a.type === 'warn' ? '#fffbeb' : '#fff1f2';
-    return `
-      <div style="border-left:3px solid ${borderColor};background:${bgColor};padding:10px 12px;border-radius:0 6px 6px 0;margin-bottom:8px;">
-        <div style="font-family:monospace;font-size:11px;color:var(--slate-700);margin-bottom:6px;">${a.line}</div>
-        <div class="text-xs" style="color:var(--slate-600);">${a.comment}</div>
-      </div>`;
-  }).join('');
+  // COL2: Annotations
+  document.getElementById('p5-annotations').innerHTML = rv.annotations.map(a => `
+    <div class="annotation-item annotation-${a.type}">
+      <div class="annotation-line">${a.line}</div>
+      <div class="annotation-comment">${a.comment}</div>
+    </div>`).join('');
 
-  document.getElementById('p5-summary').innerHTML = `
-    <div class="notice notice-info">${rv.summary}</div>`;
-
-  // COL3 - 전문가 매칭
+  // COL4: Experts
   document.getElementById('p5-experts').innerHTML = r.experts.map(e => `
-    <div class="card" style="margin-bottom:10px;">
-      <div class="d-flex items-center gap-12">
-        <div style="font-size:32px;">${e.photo}</div>
-        <div style="flex:1;">
+    <div class="expert-card">
+      <div class="d-flex items-center gap-8">
+        <div class="expert-avatar">${e.photo}</div>
+        <div class="expert-info">
           <div class="font-bold text-sm">${e.name}</div>
-          <div class="text-xs text-slate-500">${e.title}</div>
-          <div class="text-xs text-slate-400 mt-4">⭐ ${e.rating} · ${e.specialty}</div>
+          <div class="text-xs text-slate-400">${e.title}</div>
+          <div class="expert-meta">
+            <span class="text-xs text-slate-500">⭐ ${e.rating}</span>
+            <span class="badge badge-indigo">${e.match}%</span>
+          </div>
         </div>
         <div style="text-align:right;">
-          <div class="badge badge-blue">${e.match}% 매칭</div>
-          <div class="text-xs font-bold mt-4">${e.price}</div>
+          <div class="font-bold text-sm text-primary">${e.price}</div>
+          <div class="text-xs text-slate-400">${e.reviews}건 리뷰</div>
         </div>
       </div>
     </div>`).join('');
