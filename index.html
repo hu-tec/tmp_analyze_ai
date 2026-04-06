@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 통합 분석 플랫폼</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="global-header">
+  <div class="logo">
+    <div class="logo-icon">A</div>
+    <div class="logo-text">Analyze<span>AI</span></div>
+  </div>
+  <nav class="header-nav">
+    <a href="#" onclick="goPage('page1')">분석 유형</a>
+    <a href="#" onclick="goPage('page2')">문서 제출</a>
+    <a href="#" onclick="goPage('page3')">1단계 분석</a>
+    <a href="#" onclick="goPage('page4')">2단계 리포트</a>
+    <a href="#" onclick="goPage('page5')">3단계 첨삭</a>
+  </nav>
+  <div class="header-right">
+    <button class="btn btn-sm btn-secondary" style="font-size:11px;">가격 안내</button>
+    <div class="header-avatar">U</div>
+  </div>
+</header>
+
+<!-- ===== STEP BAR ===== -->
+<div class="step-bar">
+  <div class="step-item active" onclick="goPage('page1')"><div class="step-num">1</div><div class="step-label">분석 유형</div></div>
+  <div class="step-connector"></div>
+  <div class="step-item" onclick="goPage('page2')"><div class="step-num">2</div><div class="step-label">문서 제출</div></div>
+  <div class="step-connector"></div>
+  <div class="step-item" onclick="goPage('page3')"><div class="step-num">3</div><div class="step-label">기본 분석</div></div>
+  <div class="step-connector"></div>
+  <div class="step-item" onclick="goPage('page4')"><div class="step-num">4</div><div class="step-label">확장 리포트</div></div>
+  <div class="step-connector"></div>
+  <div class="step-item" onclick="goPage('page5')"><div class="step-num">5</div><div class="step-label">전문가 첨삭</div></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 1: 분석 유형 선택                                         -->
+<!-- ============================================================ -->
+<div class="screen active" id="page1">
+  <div class="page-title-bar"><h1>📋 AI 분석 유형 선택</h1><p>분석 모드와 종목을 선택하세요</p></div>
+  <div class="content-area">
+    <div class="grid-4col">
+      <!-- COL1: 분석 모드 + 종목 -->
+      <div>
+        <!-- 분석 모드 -->
+        <div class="card-title mb-8" style="padding:0 4px;">분석 모드</div>
+        <div class="exam-card selected" onclick="selectMode(this,'exam')" data-mode="exam">
+          <div class="exam-icon">📝</div><div class="exam-name">시험 분석</div>
+          <div class="exam-desc">시험 답안을 제출하면 채점 기준표에 따라 AI가 자동 채점합니다.</div>
+          <div class="exam-tags"><span class="badge badge-blue">자동 채점</span><span class="badge badge-green">등급 판정</span></div>
+        </div>
+        <div class="exam-card mt-12" onclick="selectMode(this,'doc')" data-mode="doc">
+          <div class="exam-icon">📄</div><div class="exam-name">문서 검수</div>
+          <div class="exam-desc">번역문, 프롬프트, 레슨플랜 등 작업물을 제출하면 AI가 품질을 검수합니다.</div>
+          <div class="exam-tags"><span class="badge badge-purple">품질 검수</span><span class="badge badge-amber">개선점 제시</span></div>
+        </div>
+
+        <!-- 종목 선택 -->
+        <div class="card-title mb-8 mt-16" style="padding:0 4px;">종목 선택</div>
+        <div class="exam-card selected" onclick="selectExam(this,'prompt')" style="padding:10px 14px;">
+          <div class="d-flex items-center gap-12"><span style="font-size:20px;">💡</span><div><div class="exam-name" style="font-size:13px;">AI프롬프트</div><div class="text-xs text-slate-500">정보성·적절성·효율성·윤리·보안</div></div></div>
+        </div>
+        <div class="exam-card mt-8" onclick="selectExam(this,'translation')" style="padding:10px 14px;">
+          <div class="d-flex items-center gap-12"><span style="font-size:20px;">🌐</span><div><div class="exam-name" style="font-size:13px;">AI번역</div><div class="text-xs text-slate-500">정확성·유창성·맥락 적합성</div></div></div>
+        </div>
+        <div class="exam-card mt-8" onclick="selectExam(this,'tesol')" style="padding:10px 14px;">
+          <div class="d-flex items-center gap-12"><span style="font-size:20px;">📚</span><div><div class="exam-name" style="font-size:13px;">TESOL</div><div class="text-xs text-slate-500">수업설계·평가·학습자 상호작용</div></div></div>
+        </div>
+        <div class="exam-card mt-8" onclick="selectExam(this,'ethics')" style="padding:10px 14px;">
+          <div class="d-flex items-center gap-12"><span style="font-size:20px;">⚖️</span><div><div class="exam-name" style="font-size:13px;">AI윤리</div><div class="text-xs text-slate-500">편향성·투명성·책임성·프라이버시</div></div></div>
+        </div>
+        <div class="exam-card mt-8" onclick="selectExam(this,'itt')" style="padding:10px 14px;">
+          <div class="d-flex items-center gap-12"><span style="font-size:20px;">🗣️</span><div><div class="exam-name" style="font-size:13px;">ITT정통번역</div><div class="text-xs text-slate-500">순차·동시통역·음성 정확도</div></div></div>
+        </div>
+      </div>
+
+      <!-- COL2: 종목별 비교 + 분석 모드별 차이 -->
+      <div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 분석 모드 비교</div></div>
+          <table class="tbl tbl-compact">
+            <thead><tr><th></th><th>시험 분석</th><th>문서 검수</th></tr></thead>
+            <tbody>
+              <tr><td class="font-bold">입력</td><td>시험 답안</td><td>작업물 (번역문, 프롬프트 등)</td></tr>
+              <tr><td class="font-bold">기준</td><td>시험 채점 기준표</td><td>품질 체크리스트</td></tr>
+              <tr><td class="font-bold">출력</td><td>점수 / 등급 / 합격 여부</td><td>품질 등급 / 개선점</td></tr>
+              <tr><td class="font-bold">분석 엔진</td><td colspan="2" class="text-center font-bold text-primary">동일한 AI 엔진</td></tr>
+              <tr><td class="font-bold">플랜</td><td colspan="2" class="text-center font-bold text-primary">동일한 3단계</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card mt-16">
+          <div class="card-header"><div class="card-title">📋 종목별 핵심 평가</div></div>
+          <table class="tbl tbl-compact">
+            <thead><tr><th>종목</th><th>대상</th><th>핵심 평가</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge badge-teal">AI프롬프트</span></td><td>기획자</td><td>정보성·적절성·효율성·윤리·보안</td></tr>
+              <tr><td><span class="badge badge-blue">AI번역</span></td><td>번역사</td><td>정확성·유창성·맥락</td></tr>
+              <tr><td><span class="badge badge-amber">TESOL</span></td><td>교사</td><td>수업설계·평가·상호작용</td></tr>
+              <tr><td><span class="badge badge-rose">AI윤리</span></td><td>개발자</td><td>편향·투명·책임·프라이버시</td></tr>
+              <tr><td><span class="badge badge-purple">ITT정통</span></td><td>통번역사</td><td>순차·동시·음성 정확도</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- COL3: 플랜 비교 -->
+      <div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📦 플랜별 기능 비교</div></div>
+          <table class="tbl tbl-compact">
+            <thead><tr><th>기능</th><th>1단계</th><th>2단계</th><th>3단계</th></tr></thead>
+            <tbody>
+              <tr><td>총점 + 등급</td><td>✅</td><td>✅</td><td>✅</td></tr>
+              <tr><td>대분류 점수</td><td>✅</td><td>✅</td><td>✅</td></tr>
+              <tr><td>세부 항목</td><td>요약</td><td>전체</td><td>전체</td></tr>
+              <tr><td>감점 요인</td><td>Top3</td><td>전체</td><td>+해설</td></tr>
+              <tr><td>시각화</td><td>기본</td><td>확장</td><td>확장</td></tr>
+              <tr><td>A4 PDF</td><td>—</td><td>✅</td><td>✅</td></tr>
+              <tr><td>전문가 첨삭</td><td>—</td><td>—</td><td>✅</td></tr>
+              <tr><td>전문가 매칭</td><td>—</td><td>—</td><td>✅</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- COL4: 시작 -->
+      <div>
+        <div class="card" style="text-align:center;padding:32px 20px;">
+          <div style="font-size:40px;margin-bottom:12px;">🚀</div>
+          <h3 style="font-size:16px;font-weight:700;">시험 시작하기</h3>
+          <p class="text-sm text-slate-500 mb-16">시험을 선택하고 답안을 제출하면<br>AI가 즉시 채점을 시작합니다.</p>
+          <button class="btn btn-primary btn-lg btn-block" onclick="goPage('page2')">답안 제출하기 →</button>
+        </div>
+        <div class="card mt-16">
+          <div class="card-header"><div class="card-title">🕐 최근 응시 내역</div></div>
+          <table class="tbl tbl-compact">
+            <thead><tr><th>시험</th><th>점수</th><th>날짜</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge badge-teal">AI프롬프트</span></td><td class="score-cell">78점</td><td class="text-slate-400">03/28</td></tr>
+              <tr><td><span class="badge badge-blue">AI번역</span></td><td class="score-cell">82점</td><td class="text-slate-400">03/25</td></tr>
+              <tr><td><span class="badge badge-rose">AI윤리</span></td><td class="score-cell">91점</td><td class="text-slate-400">03/20</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 2: 답안 제출                                              -->
+<!-- ============================================================ -->
+<div class="screen" id="page2">
+  <div class="page-title-bar"><h1>✍️ 문서 제출 및 분석 옵션</h1><p>분석할 문서를 입력하고 플랜을 선택하세요</p></div>
+  <div class="content-area">
+    <div class="grid-4col">
+      <!-- COL1: 시험 정보 -->
+      <div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📋 시험 정보</div></div>
+          <div class="kpi mb-12"><div class="kpi-label">선택 시험</div><div class="kpi-value text-lg"><span class="badge badge-teal">AI프롬프트</span></div></div>
+          <div class="kpi mb-12"><div class="kpi-label">총 배점</div><div class="kpi-value">100점</div></div>
+          <div class="kpi mb-12"><div class="kpi-label">평가 영역</div><div class="kpi-value text-lg">5개 대분류</div></div>
+        </div>
+        <div class="card mt-16">
+          <div class="card-header"><div class="card-title">⚠️ 주의사항</div></div>
+          <ul style="list-style:none;font-size:12px;color:var(--slate-600);line-height:2;">
+            <li>• 답안은 한국어 또는 영어로 작성</li>
+            <li>• 최대 5,000자 이내</li>
+            <li>• 파일 첨부 시 PDF, DOCX 지원</li>
+            <li>• 제출 후 수정 불가</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- COL2: 문제 입력 -->
+      <div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📝 분석 대상</div></div>
+          <div class="form-group">
+            <label class="form-label">문서 유형</label>
+            <select class="form-select"><option>시험 답안</option><option>번역문</option><option>프롬프트</option><option>레슨플랜</option><option>기타 문서</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">원문 / 문제 (선택)</label>
+            <textarea class="form-textarea" id="questionInput" placeholder="시험 문제 또는 원문이 있으면 입력하세요 (선택사항)"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">파일 첨부 (선택)</label>
+            <div style="border:2px dashed var(--slate-200);border-radius:var(--radius);padding:16px;text-align:center;cursor:pointer;background:var(--slate-50);">
+              <div style="font-size:24px;margin-bottom:6px;">📎</div>
+              <div class="text-sm text-slate-500">PDF, DOCX 파일을 드래그하거나 클릭</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COL3: 답안 입력 -->
+      <div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📄 분석할 문서</div></div>
+          <div class="form-group">
+            <label class="form-label">문서 내용</label>
+            <textarea class="form-textarea" id="answerInput" style="min-height:220px;" placeholder="분석할 문서 내용을 입력하세요"></textarea>
+          </div>
+          <div class="d-flex justify-between items-center mt-8">
+            <span class="text-xs text-slate-400"><span id="charCount">0</span> / 5,000자</span>
+            <button class="btn btn-sm btn-secondary">임시 저장</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- COL4: 플랜 선택 -->
+      <div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎯 플랜 선택</div></div>
+          <div class="tier-card selected mb-12" onclick="selectTier(this,1)">
+            <div class="d-flex justify-between items-center"><span class="tier-name">1단계 기본 분석</span><span class="text-lg font-extrabold text-primary">무료</span></div>
+            <div class="text-xs text-slate-400 mt-4">빠른 AI 자동 채점 · 총점 · 대분류 · 감점 Top3</div>
+          </div>
+          <div class="tier-card mb-12" onclick="selectTier(this,2)">
+            <div class="d-flex justify-between items-center"><span class="tier-name">2단계 확장 리포트</span><span class="text-lg font-extrabold text-primary">₩29,000</span></div>
+            <div class="text-xs text-slate-400 mt-4">전체 분석 · Heatmap · PDF 리포트 포함</div>
+          </div>
+          <div class="tier-card mb-12" onclick="selectTier(this,3)">
+            <div class="d-flex justify-between items-center"><span class="tier-name">3단계 전문가 첨삭</span><span class="text-lg font-extrabold" style="color:var(--accent);">₩79,000</span></div>
+            <div class="text-xs text-slate-400 mt-4">전문가 코멘트 · 수정 가이드 · PDF 포함</div>
+          </div>
+          <div class="notice notice-info mt-8" style="font-size:10px;">ℹ️ 채점 기준은 모든 플랜에서 동일합니다.</div>
+          <button class="btn btn-primary btn-block btn-lg mt-16" onclick="goPage('page3')">⚡ 채점 시작</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 3: 1단계 기본 분석                                        -->
+<!-- ============================================================ -->
+<div class="screen" id="page3">
+  <div class="page-title-bar"><h1>📊 1단계 기본 분석 결과</h1><p>AI프롬프트 시험 · AI 자동 채점 종합 리포트</p></div>
+  <div class="content-area">
+    <div class="grid-4col">
+      <!-- COL1: 총점 + 레이더 + 게이지 -->
+      <div>
+        <div class="card text-center" id="p3-score-ring"></div>
+        <div class="card mt-16"><div class="card-header"><div class="card-title">🕸️ 5대 영역 레이더</div></div><div id="p3-radar"></div></div>
+        <div class="card mt-16"><div class="card-title mb-12">🎯 영역별 달성률</div><div id="p3-gauges"></div></div>
+        <div class="card mt-16">
+          <div class="card-header"><div class="card-title">📋 시험 정보</div></div>
+          <table class="tbl tbl-compact">
+            <tbody>
+              <tr><td class="text-slate-500">시험</td><td class="font-bold">AI프롬프트</td></tr>
+              <tr><td class="text-slate-500">응시일</td><td>2026.03.30</td></tr>
+              <tr><td class="text-slate-500">문항</td><td>서술형</td></tr>
+              <tr><td class="text-slate-500">채점 엔진</td><td>v3.2</td></tr>
+              <tr><td class="text-slate-500">소요 시간</td><td>47분 12초</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- COL2: 대분류 + 차트 -->
+      <div>
+        <div class="card"><div class="card-header"><div class="card-title">📈 대분류 점수표</div><span class="badge badge-gray">5개 영역</span></div><div id="p3-cat-table"></div></div>
+        <div class="card mt-16"><div class="card-header"><div class="card-title">📊 영역별 달성률 바 차트</div></div><div id="p3-bar-chart"></div></div>
+        <div class="card mt-16"><div class="card-header"><div class="card-title">🍩 배점 비율 도넛 차트</div></div><div id="p3-donut"></div></div>
+      </div>
+
+      <!-- COL3: 감점 + 기준표 -->
+      <div>
+        <div class="card"><div class="card-header"><div class="card-title">🏆 감점 요인 Top 3</div></div><div id="p3-deductions"></div></div>
+        <div class="accordion mt-16">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)">📖 채점 기준표 원문 보기 <span class="accordion-arrow">▼</span></button>
+          <div class="accordion-body">
+            <table class="tbl tbl-compact tbl-striped">
+              <thead><tr><th>대분류</th><th>세부 기준</th><th>배점</th></tr></thead>
+              <tbody>
+                <tr><td>정보성</td><td>사실 정확성, 출처 신뢰성, 개방성</td><td>30</td></tr>
+                <tr><td>적절성</td><td>맥락 부합도, 대상 적합성, 목적 정렬</td><td>30</td></tr>
+                <tr><td>효율성</td><td>간결성, 반복 제거</td><td>20</td></tr>
+                <tr><td>윤리</td><td>편향 방지, 공정성</td><td>10</td></tr>
+                <tr><td>보안</td><td>개인정보 보호, 주입 방지</td><td>10</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- COL4: 개선 + 업셀 -->
+      <div>
+        <div class="card"><div class="card-header"><div class="card-title">🎯 개선 우선순위 Top 3</div></div><div id="p3-improvements"></div></div>
+        <div class="card mt-16"><div class="card-title mb-8">📊 강점 vs 약점 비율</div><div id="p3-strength"></div></div>
+        <div class="upsell-box mt-16">
+          <h4>📈 2단계 확장 리포트로 업그레이드</h4>
+          <p>Heatmap 분석, 전체 감점 사유, 기준 대비 격차, A4 PDF 리포트를 확인하세요.</p>
+          <button class="btn btn-lg btn-block" style="background:#fff;color:var(--primary);font-weight:700;" onclick="goPage('page4')">₩29,000 업그레이드 →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 4: 2단계 확장 리포트                                      -->
+<!-- ============================================================ -->
+<div class="screen" id="page4">
+  <div class="page-title-bar"><h1>📈 2단계 확장 리포트</h1><p>AI프롬프트 시험 · 전체 세부 분석 + PDF 리포트</p></div>
+  <div class="content-area">
+    <div class="grid-4col">
+      <!-- COL1: 총점 + 바 + 감점 전체 -->
+      <div>
+        <div class="card text-center" id="p4-score-ring"></div>
+        <div class="card mt-16"><div class="card-title mb-8">📊 영역별 달성률</div><div id="p4-bars"></div></div>
+        <div class="card mt-16">
+          <div class="card-header"><div class="card-title">🏆 감점 요인 전체</div></div>
+          <div id="p4-deductions-all"></div>
+        </div>
+        <div class="notice notice-info mt-16">
+          <span>ℹ️</span><span>모든 단계는 동일한 채점 기준과 동일한 채점 엔진을 사용합니다.</span>
+        </div>
+      </div>
+
+      <!-- COL2: 세부 채점 전체 + 워터폴 -->
+      <div>
+        <div class="card"><div class="card-header"><div class="card-title">📝 세부 채점표 (전체)</div></div><div id="p4-detail-tables"></div></div>
+        <div class="card mt-16"><div class="card-title mb-8">🌊 감점 워터폴 차트</div><div id="p4-waterfall"></div></div>
+      </div>
+
+      <!-- COL3: 전문 코멘트 + 분포 + 도트 -->
+      <div>
+        <div class="card"><div class="card-header"><div class="card-title">💬 AI 전문 코멘트</div></div><div id="p4-comments"></div></div>
+        <div class="card mt-16"><div class="card-title mb-8">📊 전체 응시자 점수 분포</div><div id="p4-distribution"></div><div class="text-xs text-center text-slate-400 mt-8">📍 내 점수: 78점 (상위 32%)</div></div>
+        <div class="card mt-16"><div class="card-title mb-8">🔲 100점 도트 매트릭스</div><div id="p4-dot-matrix"></div></div>
+      </div>
+
+      <!-- COL4: PDF + 업셀 -->
+      <div>
+        <div class="card" style="text-align:center;padding:24px;">
+          <div style="font-size:40px;margin-bottom:8px;">📄</div>
+          <h3 style="font-size:14px;font-weight:700;">A4 PDF 리포트</h3>
+          <p class="text-xs text-slate-500 mb-16">위 분석 내용을 PDF로 다운로드</p>
+          <button class="btn btn-primary btn-block">📥 PDF 다운로드</button>
+        </div>
+        <div class="upsell-box mt-16">
+          <h4>🎓 3단계 전문가 첨삭</h4>
+          <p>전문가가 직접 답안을 검토하고 문장별 첨삭 코멘트와 수정 가이드를 제공합니다.</p>
+          <button class="btn btn-lg btn-block" style="background:#fff;color:var(--accent);font-weight:700;" onclick="goPage('page5')">₩79,000 업그레이드 →</button>
+        </div>
+        <div class="card mt-16">
+          <div class="card-header"><div class="card-title">📋 이 리포트에 포함된 것</div></div>
+          <ul style="list-style:none;font-size:11px;color:var(--slate-600);line-height:2;">
+            <li>✅ 총점 + 등급 + 레이더</li>
+            <li>✅ 대분류 점수표 + 바 차트</li>
+            <li>✅ 세부 채점 전체 항목</li>
+            <li>✅ 감점 워터폴 + 전체 랭킹</li>
+            <li>✅ AI 전문 코멘트</li>
+            <li>✅ 응시자 분포 비교</li>
+            <li>✅ A4 PDF 다운로드</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 5: 3단계 전문가 첨삭                                      -->
+<!-- ============================================================ -->
+<div class="screen" id="page5">
+  <div class="page-title-bar"><h1>🎓 3단계 전문가 첨삭</h1><p>전문가가 직접 답안을 검토하고 문장별 첨삭을 제공합니다</p></div>
+  <div class="content-area">
+    <div class="grid-4col">
+      <!-- COL1: 전문가 프로필 + 로드맵 -->
+      <div>
+        <div class="card" id="p5-reviewer"></div>
+        <div class="card mt-16">
+          <div class="card-header"><div class="card-title">📋 첨삭 결과 요약</div></div>
+          <div id="p5-summary"></div>
+        </div>
+        <div class="card mt-16">
+          <div class="card-header"><div class="card-title">🗺️ 학습 로드맵</div></div>
+          <div id="p5-roadmap"></div>
+        </div>
+      </div>
+
+      <!-- COL2-3: 첨삭 내용 (2칸) -->
+      <div style="grid-column: span 2;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">✏️ 문장별 전문가 첨삭</div></div>
+          <div id="p5-annotations"></div>
+        </div>
+      </div>
+
+      <!-- COL4: 전문가 매칭 -->
+      <div>
+        <div class="card" style="text-align:center;padding:24px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;">
+          <div style="font-size:36px;margin-bottom:8px;">🎯</div>
+          <h3 style="font-size:14px;font-weight:700;">전문가 찾기</h3>
+          <p style="font-size:11px;opacity:.85;margin:8px 0 16px;">약점 분야 기반 맞춤 전문가를 추천합니다</p>
+          <button class="btn btn-lg btn-block" style="background:#fff;color:var(--primary);font-weight:700;">전문가 매칭 보기</button>
+        </div>
+        <div class="card-title mt-16 mb-8" style="padding:0 4px;">추천 전문가</div>
+        <div id="p5-experts"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+<script>
+  // 더미 데이터 채우기
+  document.getElementById('questionInput').value = DUMMY_QUESTION;
+  document.getElementById('answerInput').value = DUMMY_ANSWER;
+  document.getElementById('charCount').textContent = DUMMY_ANSWER.length;
+  document.getElementById('answerInput').addEventListener('input', function() {
+    document.getElementById('charCount').textContent = this.value.length;
+  });
+</script>
+</body>
+</html>
