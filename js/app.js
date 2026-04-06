@@ -381,23 +381,45 @@ async function fetchCbtResults() {
 }
 
 function buildCbtAnswerText(d) {
-  // CBT 결과를 분석용 텍스트로 변환
+  // CBT 결과를 분석용 텍스트로 변환 — responses 포함 시 문항별 상세
   let text = '';
   text += `시험: ${d.examTitle || ''}\n`;
   text += `점수: ${d.score ?? '-'}/${d.totalPoints ?? '-'}점 (${d.percentage ?? '-'}%)\n`;
   text += `합격: ${d.passed ? '합격' : '불합격'}\n`;
+
+  // 카테고리별 점수
   if (d.categoryScores && typeof d.categoryScores === 'object') {
     text += '\n카테고리별 점수:\n';
     if (Array.isArray(d.categoryScores)) {
       d.categoryScores.forEach(cs => {
-        text += `  ${cs.category || cs.name || '-'}: ${cs.score ?? cs.earned ?? '-'}/${cs.total ?? cs.max ?? '-'}점\n`;
+        text += `  ${cs.category || cs.name || '-'}: ${cs.score ?? cs.earned ?? cs.earnedPoints ?? '-'}/${cs.total ?? cs.max ?? cs.points ?? '-'}점\n`;
       });
     } else {
       Object.entries(d.categoryScores).forEach(([k, v]) => {
-        text += `  ${k}: ${typeof v === 'object' ? JSON.stringify(v) : v}\n`;
+        if (typeof v === 'object' && v !== null) {
+          text += `  ${k}: ${v.earnedPoints ?? v.correct ?? '-'}/${v.points ?? v.total ?? '-'}점 (${v.correct ?? '-'}/${v.total ?? '-'}문항)\n`;
+        } else {
+          text += `  ${k}: ${v}\n`;
+        }
       });
     }
   }
+
+  // 문항별 상세 (responses가 있을 때)
+  if (d.responses && Array.isArray(d.responses) && d.responses.length > 0) {
+    text += '\n문항별 상세:\n';
+    d.responses.forEach((r, i) => {
+      const mark = r.isCorrect ? '✅' : '❌';
+      text += `\n${mark} 문항 ${i+1} [${r.category || '-'}] (${r.earnedPoints ?? 0}/${r.points ?? 0}점)\n`;
+      text += `  문제: ${r.questionText || '-'}\n`;
+      text += `  내 답: ${r.userAnswer || '-'}\n`;
+      if (!r.isCorrect) {
+        text += `  정답: ${r.correctAnswer || '-'}\n`;
+        if (r.explanation) text += `  해설: ${r.explanation}\n`;
+      }
+    });
+  }
+
   return text;
 }
 
@@ -511,21 +533,22 @@ function processPayment() {
 
 /* ===== PDF DOWNLOAD ===== */
 function downloadPDF() {
-  // 현재 보이는 결과 페이지를 프린트용으로 렌더링
-  document.body.classList.add('print-mode');
+  // page4 (가장 포괄적)를 프린트 대상으로 설정
+  const printPage = document.getElementById('page4');
+  if (!printPage) return;
 
-  // 인쇄할 페이지 결정 (page4가 가장 포괄적)
-  const printPage = document.getElementById('page4') || document.getElementById('page3');
-  if (printPage) {
-    printPage.classList.add('print-target');
-  }
+  // 날짜 워터마크 설정
+  const r = currentResult || DUMMY_RESULT;
+  printPage.setAttribute('data-date', `${r.date || new Date().toISOString().split('T')[0]} · ${EXAMS[r.exam]?.name || ''} · ${r.total}점 ${r.grade}`);
+  printPage.classList.add('print-target');
+
+  // 모든 아코디언 열기
+  printPage.querySelectorAll('.accordion').forEach(a => a.classList.add('open'));
 
   window.print();
 
-  // 프린트 다이얼로그 닫힌 후 복원
   setTimeout(() => {
-    document.body.classList.remove('print-mode');
-    if (printPage) printPage.classList.remove('print-target');
+    printPage.classList.remove('print-target');
   }, 500);
 }
 

@@ -480,24 +480,90 @@ table { border-collapse: collapse; width: 100%; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 1200px) { .grid-4col { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 1200px) {
+  .grid-4col { grid-template-columns: repeat(2, 1fr); }
+  .grid-4col > div[style*="grid-column: span 2"] { grid-column: span 2; }
+}
 @media (max-width: 768px) {
   .grid-4col { grid-template-columns: 1fr; }
+  .grid-4col > div[style*="grid-column: span 2"] { grid-column: span 1; }
   .header-nav { display: none; }
+  .page-title-bar { padding: 14px 16px 8px; }
   .page-title-bar h1 { font-size: 15px; }
+  .content-area { padding: 0 12px 24px; }
+  .step-bar { padding: 10px 8px; gap: 0; overflow-x: auto; }
+  .step-label { display: none; }
+  .step-connector { width: 12px; }
+  .global-header { padding: 0 12px; }
+  .modal-box { width: 95vw; max-height: 90vh; }
+  .bar-label { width: 48px; font-size: 9px; }
+  .score-ring { width: 90px; height: 90px; }
+  .ring-value { font-size: 24px; }
+  .donut-chart { width: 110px; height: 110px; }
+  .exam-card { padding: 10px; }
+  .card { padding: 12px; }
+  .tier-card { padding: 10px; }
+  .upsell-box { padding: 16px; }
+  .upsell-box h4 { font-size: 12px; }
+  .rank-label { width: 50px; font-size: 9px; }
+  .annotation-line { font-size: 10px; }
+}
+@media (max-width: 480px) {
+  .grade-badge { font-size: 10px; padding: 2px 8px; }
+  .gauge-meters { gap: 4px; }
+  .mini-gauge-ring { width: 36px; height: 36px; }
+  .mini-gauge-val { font-size: 9px; }
+  .polar-grid { gap: 2px; }
+  .d-flex.gap-8 { gap: 4px; }
 }
 
 /* ===== PRINT ===== */
 @media print {
-  body { background: #fff !important; font-size: 11px; }
-  .global-header, .step-bar, .modal-overlay,
-  .upsell-box, .header-right, .header-nav { display: none !important; }
+  body { background: #fff !important; font-size: 10px; color: #1e293b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* 숨길 요소 */
+  .global-header, .step-bar, .modal-overlay, .upsell-box,
+  .header-right, .header-nav, .btn, .tier-card, .exam-card { display: none !important; }
+
+  /* 모든 페이지 숨기고 대상만 표시 */
   .screen { display: none !important; }
   .screen.print-target { display: block !important; }
-  .print-target .grid-4col { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; page-break-inside: avoid; }
-  .page-title-bar { padding: 10px 0; }
+
+  /* 레이아웃 */
+  .print-target .grid-4col { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .print-target .grid-4col > div[style*="grid-column: span 2"] { grid-column: span 2; }
+  .page-title-bar { padding: 8px 0; border-bottom: 2px solid #1e293b; margin-bottom: 8px; }
+  .page-title-bar h1 { font-size: 14px; }
+  .page-title-bar p { font-size: 9px; }
   .content-area { padding: 0; }
-  .btn { display: none !important; }
-  @page { margin: 15mm; size: A4; }
+
+  /* 카드 */
+  .card { box-shadow: none !important; border: 1px solid #cbd5e1 !important; break-inside: avoid; page-break-inside: avoid; padding: 10px; margin-bottom: 6px; }
+  .card:hover { box-shadow: none !important; }
+
+  /* 차트 색상 보존 */
+  .bar-fill, .ring-fill, .radar-area, .donut-seg, .dot-earned,
+  .rank-bar-fill, .stacked-seg, .waterfall-bar, .badge,
+  .heat-cell, .grade-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* 도트 매트릭스 축소 */
+  .dot-matrix { gap: 1px; }
+  .dot-cell { border-radius: 1px; }
+
+  /* 아코디언 모두 열기 */
+  .accordion-body { display: block !important; }
+  .accordion-arrow { display: none; }
+
+  /* 노티스 */
+  .notice { border: 1px solid #94a3b8; background: #f8fafc !important; }
+
+  /* 워터마크 */
+  .print-target::after {
+    content: 'AnalyzeAI Report — ' attr(data-date);
+    position: fixed; bottom: 10mm; right: 15mm;
+    font-size: 8px; color: #94a3b8;
+  }
+
+  @page { margin: 12mm 15mm; size: A4; }
+  @page :first { margin-top: 10mm; }
 }

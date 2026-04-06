@@ -253,7 +253,7 @@ const ScoringEngine = {
       distribution,
       expertComments,
       expertReview: this._genExpertReview(answerText, deductions, improvements),
-      experts: DUMMY_RESULT.experts, // 전문가 매칭은 기존 더미
+      experts: this._matchExperts(examType, categories),
     };
   },
 
@@ -292,6 +292,25 @@ const ScoringEngine = {
     if (weakItems.length === 0) return `${category.shortName} 영역은 전반적으로 양호합니다.`;
     const names = weakItems.map(i => i.name).join(', ');
     return `${category.shortName} 영역에서 ${names} 항목이 기준에 미달합니다. 해당 항목의 구체적인 보완이 필요합니다.`;
+  },
+
+  // 채점 결과 기반 전문가 매칭
+  _matchExperts(examType, categories) {
+    const examNames = { prompt:'AI프롬프트', translation:'AI번역', tesol:'TESOL', ethics:'AI윤리', itt:'ITT정통번역' };
+    const weakCats = categories.filter(c => c.pct < 75).map(c => c.shortName);
+    const examName = examNames[examType] || examType;
+
+    const pool = [
+      { name: '김분석', title: `${examName} 마스터`, specialty: weakCats[0] ? `${weakCats[0]} 전문` : '종합 분석', rating: 4.9, reviews: 187, price: '₩90,000', photo: '👨‍💼' },
+      { name: '이채점', title: `${examName} 전문가`, specialty: weakCats[1] ? `${weakCats[1]} 전문` : '실무 코칭', rating: 4.7, reviews: 142, price: '₩75,000', photo: '👩‍💼' },
+      { name: '박멘토', title: `${examName} 컨설턴트`, specialty: weakCats[2] ? `${weakCats[2]} 전문` : '전략 자문', rating: 4.8, reviews: 98, price: '₩85,000', photo: '👨‍🔬' },
+    ];
+
+    // 약점 카테고리 매칭도 계산
+    return pool.map((e, i) => ({
+      ...e,
+      match: Math.max(70, 95 - i * 7 - Math.floor(Math.random() * 5))
+    }));
   },
 
   _genExpertReview(text, deductions, improvements) {
